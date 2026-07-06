@@ -3,94 +3,116 @@ import time
 
 pygame.init()
 
+def collision(shape1,shape2) :
+
+    if (shape1.x < shape2.x + shape2.width and shape1.x + shape1.width > shape2.x and shape1.y < shape2.y+shape2.height and shape1.y+shape1.height > shape2.y) :
+        print("Collide!")
+        return True
+    
+    return False
+
+class Player() : 
+
+    def __init__(self,x,y,width,height) : 
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height 
+        self.xV = 0
+        self.yV = 0
+        self.grounded = False 
+
+        self.player = pygame.Rect(x,y,width,height)   
+
+    def draw(self) : 
+        pygame.draw.rect(screen, (255,0,0), self.player)
+
+    def input(self) : 
+        self.xV = 0 
+        if event.type == pygame.KEYDOWN : 
+
+            if event.key == pygame.K_LEFT:
+                self.xV = -15
+
+            if event.key == pygame.K_RIGHT: 
+                self.xV = 15
+
+            if event.key == pygame.K_UP and self.grounded: 
+                self.grounded = False 
+                self.yV = -30
+
+    def movement_collision(self) : 
+        self.yV += gravity
+
+        self.player.x += self.xV
+
+        for shape in platforms :
+            if self.player.colliderect(shape) : 
+                print("collide")
+                if self.xV < 0: 
+                    self.player.left = shape.right
+                elif self.xV > 0:
+                    self.player.right = shape.left
+
+        self.player.y += self.yV
+        self.grounded = False
+
+        for shape in platforms : 
+            if self.player.colliderect(shape) : 
+                if self.yV > 0: 
+                    self.player.bottom = shape.top
+                    self.yV = 0 
+                    self.grounded = True
+
+                elif self.yV < 0:
+                    self.player.top = shape.bottom  
+                    self.yV = 0
+
+
+# make screen
 screenW = 700
 screenH = 700
 
 screen = pygame.display.set_mode( (screenW,screenH) )
 screen.fill( (0,0,0) )
 
-playerW = 100
-playerH = 100 
+# make shapes
+player = Player(0,0,50,50)
 
-playerX = 0
-playerY = 0 
-
-player = pygame.Rect(playerX,playerY,playerW,playerH) 
-
-floorW = 700
-floorH = 150 
-
-floorX = 0
-floorY = 550
-
-floor = pygame.Rect(floorX,floorY,floorW,floorH)
-
-blockW = 200
-blockH = 150 
-
-blockX = 300 
-blockY = 400
-
-block = pygame.Rect(blockX,blockY,blockW,blockH)
+platforms  = [
+    pygame.Rect(0,550,700,150),
+    pygame.Rect(300,400,200,150),
+    pygame.Rect(0,450,200,150)
+]
 
 pygame.display.flip()
 
-gravity = 5
+gravity = 1
+playerXVel = 0
+playerYVel = 0
 
 running = True 
-jump = False
+grounded = False
 clicked = False
 while running == True : 
 
     for event in pygame.event.get() : 
         if event.type == pygame.QUIT : 
-            running = False 
+            running = False
 
-    if player.colliderect(floor) == False: 
-
-        player.move_ip(0,gravity)
-
-        if player.colliderect(block):
-            player.move_ip(0,-gravity) 
-            clicked = False
-
-    else : 
-        clicked = False
-
-    if jump == True : 
-        player.move_ip(0,-10)
-
-    if player.y == playerY-200 : 
-        jump = False
-
-    if event.type == pygame.KEYDOWN : 
-
-        if event.key == pygame.K_LEFT and (player.x)-30 >= 0:
-        
-            if not player.colliderect(block) and player.x < block.x + block.width : 
-                player.move_ip(-10,0)
-
-        if event.key == pygame.K_RIGHT and (player.x+player.width)+30 <= 700: 
-            player.move_ip(10,0)
-
-            if player.colliderect(block) and player.x+player.width > block.x: 
-                player.move_ip(-10,0)
-
-        if event.key == pygame.K_UP and clicked == False: 
-            jump = True 
-            clicked = True
-            playerY = player.y
+    # collision(player,block)
+    player.input()
     
 
-    # if event.type == pygame.KEYUP and clicked == True:
-    #     clicked = False
-        
-        
+    player.movement_collision()
 
     screen.fill( (0,0,0) )
-    pygame.draw.rect(screen, (255,0,0), player)
-    pygame.draw.rect(screen, (0,255,0), floor)
-    pygame.draw.rect(screen, (0,0,255), block)
+    player.draw()
+
+    for shape in platforms: 
+        pygame.draw.rect(screen, (0,255,0), shape)
+    
+    
     pygame.display.update()
 
     time.sleep(0.01)
